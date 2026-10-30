@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dự đoán Tài Xỉu & Sicbo — Ultimate AI</title>
+    <style>
+        * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; }
+        body {
+            background: linear-gradient(145deg, #070a12 0%, #12172a 100%);
+            min-height: 100vh; margin: 0; padding: 20px; color: #fff;
+        }
+        .container {
+            max-width: 1500px; margin: 0 auto;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+        }
+        @media (max-width: 1000px) { .container { grid-template-columns: 1fr; } }
+        .card {
+            background: rgba(16, 21, 36, 0.92);
+            backdrop-filter: blur(14px);
+            border-radius: 28px; padding: 22px 20px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), inset 0 1px 2px rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.06);
+            position: relative;
+        }
+        h2 {
+            margin-top: 0; margin-bottom: 14px; font-size: 1.4rem;
+            display: flex; align-items: center; gap: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;
+        }
+        h2 span { font-size: 1.6rem; }
+        h3 {
+            font-size: 0.8rem; color: #8b94a8; text-transform: uppercase;
+            letter-spacing: 1.5px; margin: 18px 0 8px;
+        }
+        .dice-area { display: flex; justify-content: center; gap: 12px; margin: 14px 0; flex-wrap: wrap; }
+        .dice {
+            width: 54px; height: 54px; background: #fff; border-radius: 14px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.8rem; font-weight: 700; color: #0b0f1c;
+            box-shadow: 0 7px 0 #8d93a5, 0 10px 15px rgba(0,0,0,0.4);
+        }
+        .info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.35); padding: 9px 16px;
+            border-radius: 50px; margin-bottom: 7px; font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .info-row strong { color: #fff; }
+        .badge {
+            font-weight: 700; padding: 3px 12px; border-radius: 30px;
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .tai { background: #f5b042; color: #1a1f2f; }
+        .xiu { background: #4d7cfe; color: #fff; }
+        .chan { background: #31c48d; color: #0b0f1c; }
+        .le { background: #e85d7a; color: #fff; }
+        .status { font-size: 0.72rem; color: #8b94a8; margin-top: 8px; text-align: right; }
+        .error { color: #e85d7a; background: rgba(232, 93, 122, 0.15); padding: 12px; border-radius: 16px; font-size: 0.9rem; }
+        .warning { color: #f5b042; background: rgba(245, 176, 66, 0.12); padding: 10px 14px; border-radius: 12px; font-size: 0.8rem; margin-top: 10px; border: 1px solid rgba(245,176,66,0.3); }
+        .loader {
+            display: inline-block; width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff;
+            border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        button {
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+            color: white; padding: 9px 20px; border-radius: 40px;
+            font-weight: 500; font-size: 0.85rem; cursor: pointer;
+            transition: all 0.2s; margin-top: 6px; width: 100%;
+        }
+        button:hover { background: rgba(255,255,255,0.18); }
+        button:active { transform: scale(0.98); }
+        button.small-btn { width: auto; padding: 6px 14px; font-size: 0.75rem; margin-top: 4px; }
+        .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+        .algo-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.78rem; }
+        .algo-table th {
+            text-align: left; padding: 5px 4px; color: #8b94a8;
+            font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-transform: uppercase; font-size: 0.6rem; letter-spacing: 1px;
+        }
+        .algo-table td { padding: 5px 4px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .algo-table tr:last-child td { border-bottom: none; }
+        .algo-name { color: #ddd; font-weight: 500; }
+        .algo-signal { font-weight: 700; }
+        .signal-tai, .signal-chan { color: #f5b042; }
+        .signal-xiu, .signal-le { color: #4d7cfe; }
+        .algo-weight { color: #8b94a8; font-size: 0.72rem; }
+        .pattern-view {
+            font-family: 'Courier New', monospace; font-size: 0.72rem;
+            background: rgba(0,0,0,0.45); padding: 7px 10px; border-radius: 10px;
+            word-break: break-all; color: #8b94a8; margin-top: 6px;
+            max-height: 60px; overflow-y: auto;
+        }
+        .pattern-view .t { color: #f5b042; }
+        .pattern-view .x { color: #4d7cfe; }
+        .pattern-view .c { color: #31c48d; }
+        .pattern-view .l { color: #e85d7a; }
+
+        .main-prediction {
+            background: linear-gradient(135deg, rgba(245,176,66,0.18), rgba(77,124,254,0.18));
+            border-radius: 20px; padding: 16px 18px; margin-top: 14px;
+            border: 2px solid rgba(255,255,255,0.12);
+            position: relative; overflow: hidden;
+        }
+        .main-prediction::before {
+            content: ''; position: absolute; top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+        .mp-label {
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;
+            color: #c0c7d4; margin-bottom: 6px; position: relative;
+        }
+        .mp-value {
+            font-size: 2.2rem; font-weight: 900; line-height: 1;
+            position: relative; display: flex; align-items: center; gap: 10px;
+            flex-wrap: wrap;
+        }
+        .mp-value .dot {
+            display: inline-block; width: 11px; height: 11px; border-radius: 50%;
+            animation: blink 1.2s infinite;
+        }
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .mp-meta {
+            font-size: 0.75rem; color: #c0c7d4; margin-top: 8px;
+            position: relative; display: flex; gap: 16px; flex-wrap: wrap;
+        }
+        .mp-meta b { color: #fff; }
+        .mp-bar {
+            height: 7px; border-radius: 6px; background: rgba(0,0,0,0.4);
+            margin-top: 10px; overflow: hidden; position: relative;
+        }
+        .mp-bar-fill {
+            height: 100%; border-radius: 6px; transition: width 0.6s ease;
+            background: linear-gradient(90deg, #f5b042, #4d7cfe);
+        }
+        .mp-bar-fill.chan-fill { background: linear-gradient(90deg, #31c48d, #e85d7a); }
+
+        .dual-prediction {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px;
+        }
+        @media (max-width: 500px) { .dual-prediction { grid-template-columns: 1fr; } }
+        .dual-box {
+            background: rgba(0,0,0,0.3); border-radius: 18px; padding: 12px 14px;
+            border: 1px solid rgba(255,255,255,0.08); position: relative; overflow: hidden;
+        }
+        .dual-box .mp-label { font-size: 0.6rem; margin-bottom: 4px; }
+        .dual-box .mp-value { font-size: 1.7rem; }
+        .dual-box .mp-meta { font-size: 0.68rem; gap: 8px; margin-top: 4px; }
+        .dual-box .mp-bar { height: 6px; margin-top: 8px; }
+
+        .new-badge {
+            position: absolute; top: 12px; right: 12px;
+            background: #e85d7a; color: #fff; font-size: 0.6rem;
+            padding: 3px 9px; border-radius: 20px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            animation: blink 1s infinite; z-index: 5;
+        }
+        .toggle-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 6px; font-size: 0.78rem; color: #c0c7d4;
+        }
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.15); border-radius: 24px; transition: 0.3s;
+        }
+        .slider:before {
+            content: ''; position: absolute; height: 16px; width: 16px;
+            left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s;
+        }
+        input:checked + .slider { background: #31c48d; }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        .history-strip { display: flex; gap: 2px; flex-wrap: wrap; margin-top: 6px; max-height: 70px; overflow-y: auto; }
+        .history-chip {
+            font-size: 0.62rem; font-weight: 700; padding: 2px 5px; border-radius: 5px;
+            min-width: 18px; text-align: center;
+        }
+        .chip-t { background: rgba(245,176,66,0.25); color: #f5b042; }
+        .chip-x { background: rgba(77,124,254,0.25); color: #4d7cfe; }
+        .chip-c { background: rgba(49,196,141,0.25); color: #31c48d; }
+        .chip-l { background: rgba(232,93,122,0.25); color: #e85d7a; }
+        .stats-row {
+            display: flex; gap: 10px; margin-top: 8px; font-size: 0.72rem; color: #8b94a8;
+            flex-wrap: wrap;
+        }
+        .stats-row b { color: #fff; }
+        .history-count {
+            font-size: 0.7rem; color: #8b94a8; margin-top: 4px; text-align: center;
+        }
+        .storage-info {
+            background: rgba(49,196,141,0.1); border: 1px solid rgba(49,196,141,0.3);
+            border-radius: 10px; padding: 6px 10px; font-size: 0.7rem;
+            color: #31c48d; margin-top: 6px;
+        }
+        .api-status {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.72rem; color: #8b94a8; margin-bottom: 8px;
+            padding: 6px 12px; background: rgba(0,0,0,0.25); border-radius: 20px;
+        }
+        .api-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: #8b94a8;
+        }
+        .api-dot.ok { background: #31c48d; box-shadow: 0 0 8px #31c48d; }
+        .api-dot.err { background: #e85d7a; box-shadow: 0 0 8px #e85d7a; }
+        .api-dot.loading { background: #f5b042; animation: blink 1s infinite; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card" id="taixiuCard">
+        <h2><span>🎲</span> Tài Xỉu — Ultimate AI</h2>
+        <div id="taixiuContent"><div style="text-align:center; padding:40px 0;"><span class="loader"></span> Đang tải...</div></div>
+    </div>
+    <div class="card" id="sicboCard">
+        <h2><span>🎲🎲🎲</span> Sicbo — Ultimate AI</h2>
+        <div id="sicboContent"><div style="text-align:center; padding:40px 0;"><span class="loader"></span> Đang tải...</div></div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    //  CẤU HÌNH API
+    // ============================================================
+    const TAIXIU_API = 'https://b52-taixiu-l69b.onrender.com/api/taixiu';
+    const SICBO_API = 'https://apitaixiu-6jjn.onrender.com/api/sicbo/b52';
+
+    // Trạng thái API
+    let apiStatus = {
+        taixiu: 'loading', // 'ok' | 'err' | 'loading'
+        sicbo: 'loading'
+    };
+
+    // ============================================================
+    //  FETCH VỚI RETRY + TIMEOUT
+    // ============================================================
+    async function fetchWithRetry(url, retries = 3, timeoutMs = 60000) {
+        let lastErr = null;
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const res = await fetch(url, {
+                    signal: controller.signal,
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/json' }
+                });
+                clearTimeout(timeoutId);
+                if (!res.ok) {
+                    if (res.status >= 400 && res.status < 500 && res.status !== 429) {
+                        throw new Error(`HTTP ${res.status} — endpoint có thể đã đổi hoặc bị xóa`);
+                    }
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                return await res.json();
+            } catch (err) {
+                clearTimeout(timeoutId);
+                lastErr = err;
+                console.warn(`[Fetch] Lần ${attempt}/${retries} lỗi (${url}):`, err.message);
+                if (attempt < retries) {
+                    await new Promise(r => setTimeout(r, 2000 * Math.pow(2, attempt - 1)));
+                }
+            }
+        }
+        const isAbort = lastErr && lastErr.name === 'AbortError';
+        throw new Error(isAbort
+            ? `Timeout ${timeoutMs/1000}s — server Render đang sleep`
+            : `Sau ${retries} lần thử: ${lastErr ? lastErr.message : 'unknown'}`);
+    }
+
+    // Ping giữ server thức mỗi 5 phút
+    function keepServerAwake() {
+        const ping = (url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {});
+        ping(TAIXIU_API);
+        ping(SICBO_API);
+    }
+    setInterval(keepServerAwake, 5 * 60 * 1000);
+
+    // ============================================================
+    //  HỆ THỐNG LƯU TRỮ VĨNH VIỄN (localStorage + nén)
+    // ============================================================
+    const STORAGE_KEYS = {
+        TAIXIU_HISTORY: 'tool_taixiu_history_v3',
+        SICBO_HISTORY: 'tool_sicbo_history_v3',
+        TAIXIU_LAST_PHIEN: 'tool_taixiu_last_phien_v3',
+        SICBO_LAST_PHIEN: 'tool_sicbo_last_phien_v3',
+        TAIXIU_LAST_DATA: 'tool_taixiu_last_data_v3',
+        SICBO_LAST_DATA: 'tool_sicbo_last_data_v3'
+    };
+
+    // Nén mảng lịch sử thành chuỗi
+    function encodeHistory(history) {
+        return history.map(h => {
+            if (h.cl !== undefined) return `${h.phien}:${h.tong}:${h.tx}:${h.cl}`;
+            return `${h.phien}:${h.tong}:${h.tx}`;
+        }).join('|');
+    }
+
+    function decodeHistory(str, isSicbo) {
+        if (!str || typeof str !== 'string') return [];
+        return str.split('|').filter(Boolean).map(part => {
+            const [phien, tong, tx, cl] = part.split(':');
+            const entry = { phien: parseInt(phien, 10), tong: parseInt(tong, 10), tx };
+            if (isSicbo && cl) entry.cl = cl;
+            return entry;
+        }).filter(e => !isNaN(e.phien) && !isNaN(e.tong));
+    }
+
+    function loadHistory(key, isSicbo) {
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) return [];
+            try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) { saveHistory(key, parsed); return parsed; }
+            } catch (e) { /* không phải JSON */ }
+            return decodeHistory(raw, isSicbo);
+        } catch (e) { console.warn('Lỗi tải lịch sử:', e); return []; }
+    }
+
+    function saveHistory(key, data) {
+        try {
+            localStorage.setItem(key, encodeHistory(data));
+        } catch (e) {
+            console.warn('Lỗi lưu lịch sử:', e);
+            if (e.name === 'QuotaExceededError') {
+                alert('⚠️ Bộ nhớ localStorage đầy! Hãy xuất lịch sử và xóa bớt dữ liệu cũ.');
+            }
+        }
+    }
+
+    function saveLastPhien(key, phien) {
+        try { localStorage.setItem(key, String(phien)); } catch (e) {}
+    }
+    function loadLastPhien(key) {
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? parseInt(raw, 10) : null;
+        } catch (e) { return null; }
+    }
+
+    // Lưu dữ liệu API cuối cùng (fallback khi mất mạng)
+    function saveLastData(key, data) {
+        try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
+    }
+    function loadLastData(key) {
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) { return null; }
+    }
+
+    // ============================================================
+    //  KHỞI TẠO LỊCH SỬ
+    // ============================================================
+    let taiXiuHistory = loadHistory(STORAGE_KEYS.TAIXIU_HISTORY, false);
+    let sicboHistory = loadHistory(STORAGE_KEYS.SICBO_HISTORY, true);
+    let lastTaiXiuPhien = loadLastPhien(STORAGE_KEYS.TAIXIU_LAST_PHIEN);
+    let lastSicboPhien = loadLastPhien(STORAGE_KEYS.SICBO_LAST_PHIEN);
+
+    function pushHistory(history, entry) {
+        if (history.length > 0 && history[history.length - 1].phien === entry.phien) return false;
+        if (history.some(h => h.phien === entry.phien)) return false;
+        history.push(entry);
+        return true;
+    }
+
+    // ============================================================
+    //  BỘ THUẬT TOÁN — 27 CÔNG THỨC
+    // ============================================================
+    function analyzeSignals(arr, optA, optB, symA, symB) {
+        const n = arr.length;
+        if (n === 0) return { signals: [], consensus: null, strongSignal: null };
+        const signals = [];
+        const nameOf = (s) => s === symA ? optA : optB;
+
+        const lastStreak = () => {
+            if (n === 0) return { sym: null, len: 0 };
+            const last = arr[n-1]; let len = 1;
+            for (let i = n-2; i >= 0; i--) { if (arr[i] === last) len++; else break; }
+            return { sym: last, len };
+        };
+        const countInWindow = (sym, win) => {
+            const start = Math.max(0, n - win); let c = 0;
+            for (let i = start; i < n; i++) if (arr[i] === sym) c++;
+            return { count: c, total: n - start };
+        };
+        const isAlternating = (k) => {
+            if (n < k) return false;
+            const start = n - k;
+            for (let i = start + 1; i < n; i++) if (arr[i] === arr[i-1]) return false;
+            return true;
+        };
+        const isPairAlternating = (k) => {
+            if (n < k || k < 4) return false;
+            const start = n - k;
+            for (let i = start; i < n - 1; i += 2) if (arr[i] !== arr[i+1]) return false;
+            for (let i = start + 2; i < n; i++) if (arr[i] !== arr[i-2]) return false;
+            return true;
+        };
+        const isTripleAlternating = (k) => {
+            if (n < k || k < 6) return false;
+            const start = n - k;
+            for (let i = start + 3; i < n; i++) if (arr[i] !== arr[i-3]) return false;
+            return true;
+        };
+
+        const streak = lastStreak();
+        const oppSym = streak.sym === symA ? symB : symA;
+        const oppName = nameOf(oppSym);
+        const streakName = nameOf(streak.sym);
+
+        if (streak.len >= 4) {
+            signals.push({ name: 'Cầu bệt (≥4)', sym: streak.sym, weight: 0.7 + Math.min(streak.len - 4, 4) * 0.05, note: `Chuỗi ${streak.len} ${streakName}` });
+        } else if (streak.len >= 2) {
+            signals.push({ name: 'Bẻ cầu bệt (2-3)', sym: oppSym, weight: 0.55, note: `Chuỗi ${streak.len} ${streakName} — bẻ` });
+        }
+        if (isAlternating(8)) {
+            const nextSym = arr[n-1] === symA ? symB : symA;
+            signals.push({ name: 'Cầu 1-1 (8)', sym: nextSym, weight: 0.7, note: '8 kết quả xen kẽ' });
+        } else if (isAlternating(6)) {
+            const nextSym = arr[n-1] === symA ? symB : symA;
+            signals.push({ name: 'Cầu 1-1 (6)', sym: nextSym, weight: 0.65, note: '6 kết quả xen kẽ' });
+        } else if (isAlternating(4)) {
+            const nextSym = arr[n-1] === symA ? symB : symA;
+            signals.push({ name: 'Cầu 1-1 (4)', sym: nextSym, weight: 0.5, note: '4 kết quả xen kẽ' });
+        }
+        if (isPairAlternating(8)) {
+            const lastTwo = arr.slice(n-2);
+            const sameLastTwo = lastTwo[0] === lastTwo[1];
+            const nextSym = sameLastTwo ? (arr[n-1] === symA ? symB : symA) : arr[n-1];
+            signals.push({ name: 'Cầu 2-2', sym: nextSym, weight: 0.6, note: 'Mẫu cặp xen kẽ' });
+        }
+        if (isTripleAlternating(12)) {
+            const lastThree = arr.slice(n-3);
+            const allSame = lastThree.every(x => x === lastThree[0]);
+            const nextSym = allSame ? (arr[n-1] === symA ? symB : symA) : arr[n-1];
+            signals.push({ name: 'Cầu 3-3', sym: nextSym, weight: 0.6, note: 'Mẫu 3-3' });
+        }
+        const win5 = countInWindow(symA, 5);
+        if (win5.total >= 5) {
+            const rA = win5.count / win5.total;
+            if (rA >= 0.8) signals.push({ name: 'Đối lập 5', sym: symB, weight: 0.55, note: `${win5.count}/5 ${optA}` });
+            else if (rA <= 0.2) signals.push({ name: 'Đối lập 5', sym: symA, weight: 0.55, note: `${win5.count}/5 ${optB}` });
+        }
+        const win7 = countInWindow(symA, 7);
+        if (win7.total >= 7) {
+            const rA = win7.count / win7.total;
+            if (rA >= 0.7) signals.push({ name: 'Momentum 7', sym: symA, weight: 0.5, note: `${win7.count}/7 ${optA}` });
+            else if (rA <= 0.3) signals.push({ name: 'Momentum 7', sym: symB, weight: 0.5, note: `${7-win7.count}/7 ${optB}` });
+        }
+        if (n >= 6) {
+            const last3 = arr.slice(n-3), prev3 = arr.slice(n-6, n-3);
+            const last3Same = last3.every(x => x === last3[0]);
+            const prev3Same = prev3.every(x => x === prev3[0]);
+            if (last3Same && prev3Same && last3[0] !== prev3[0]) {
+                signals.push({ name: 'Bẻ 3-3 xong', sym: last3[0] === symA ? symB : symA, weight: 0.65, note: 'Mẫu 3-3 vừa xong' });
+            }
+        }
+        if (n >= 6) {
+            const seg = arr.slice(n-6);
+            if (seg[0] === seg[5] && seg[1] === seg[4] && seg[2] === seg[3] && seg[0] !== seg[1]) {
+                signals.push({ name: 'Cầu đối xứng', sym: seg[0], weight: 0.55, note: '6 kết quả đối xứng' });
+            }
+        }
+        if (n >= 10) {
+            const last = arr[n-1]; let cA = 0, cB = 0;
+            for (let i = 0; i < n-1; i++) if (arr[i] === last) { arr[i+1] === symA ? cA++ : cB++; }
+            const total = cA + cB;
+            if (total >= 3) {
+                if (cA > cB * 1.5) signals.push({ name: 'Markov bậc 1', sym: symA, weight: 0.45 + (cA/total - 0.5) * 0.4, note: `Sau ${nameOf(last)} → ${optA}` });
+                else if (cB > cA * 1.5) signals.push({ name: 'Markov bậc 1', sym: symB, weight: 0.45 + (cB/total - 0.5) * 0.4, note: `Sau ${nameOf(last)} → ${optB}` });
+            }
+        }
+        if (n >= 15) {
+            const key = arr[n-2] + arr[n-1];
+            let cA = 0, cB = 0;
+            for (let i = 0; i < n-2; i++) if (arr[i] + arr[i+1] === key) { arr[i+2] === symA ? cA++ : cB++; }
+            const total = cA + cB;
+            if (total >= 3) {
+                if (cA > cB * 1.4) signals.push({ name: 'Markov bậc 2', sym: symA, weight: 0.5 + (cA/total - 0.5) * 0.5, note: `Mẫu ${key} → ${optA}` });
+                else if (cB > cA * 1.4) signals.push({ name: 'Markov bậc 2', sym: symB, weight: 0.5 + (cB/total - 0.5) * 0.5, note: `Mẫu ${key} → ${optB}` });
+            }
+        }
+        if (n >= 20) {
+            const priorA = arr.filter(x => x === symA).length / n;
+            const recent10 = arr.slice(-10);
+            const postA = recent10.filter(x => x === symA).length / 10;
+            if (postA - priorA > 0.25) signals.push({ name: 'Bayes đảo', sym: symB, weight: 0.5, note: `${optA} tăng đột biến` });
+            else if (priorA - postA > 0.25) signals.push({ name: 'Bayes đảo', sym: symA, weight: 0.5, note: `${optB} tăng đột biến` });
+        }
+        if (n >= 30) {
+            let cA = 0; for (const x of arr) if (x === symA) cA++;
+            const rA = cA / n;
+            if (rA > 0.58) signals.push({ name: 'Tần suất đảo', sym: symB, weight: 0.42, note: `${optA} ${(rA*100).toFixed(0)}%` });
+            else if (rA < 0.42) signals.push({ name: 'Tần suất đảo', sym: symA, weight: 0.42, note: `${optB} ${((1-rA)*100).toFixed(0)}%` });
+        }
+        if (n >= 12) {
+            const last8 = arr.slice(n-8);
+            if (last8.length === 8) {
+                const [p1,p2,p3,p4,p5,p6,p7,p8] = last8;
+                if (p1===p3 && p2===p4 && p1!==p2 && p5===p6 && p7===p8 && p5===p7 && p5!==p1) {
+                    signals.push({ name: 'Cầu 1-1-2-2', sym: p5===symA?symB:symA, weight: 0.6, note: 'Mẫu 1-1-2-2' });
+                }
+            }
+        }
+        if (n >= 4) {
+            const l4 = arr.slice(n-4);
+            if (l4[0]===l4[1] && l4[2]===l4[3] && l4[0]!==l4[2]) {
+                signals.push({ name: 'Cầu 2-2 xong', sym: l4[0], weight: 0.55, note: 'Cặp 2-2 vừa xong' });
+            }
+        }
+        if (n >= 6) {
+            const l6 = arr.slice(n-6);
+            if (l6[0]===l6[1] && l6[1]===l6[2] && l6[3]===l6[4] && l6[4]===l6[5] && l6[0]!==l6[3]) {
+                signals.push({ name: 'Cầu 3-3 xong', sym: l6[0], weight: 0.6, note: 'Mẫu 3-3 vừa xong' });
+            }
+        }
+        if (streak.len >= 6) {
+            signals.push({ name: 'Bẻ bệt dài', sym: oppSym, weight: 0.72, note: `Chuỗi ${streak.len} — nguy cơ bẻ` });
+        }
+        if (n >= 10) {
+            const l10 = arr.slice(n-10);
+            const p2 = l10.slice(2,4), p3 = l10.slice(4,7), p4 = l10.slice(7,10);
+            const allSame = (seg) => seg.every(x => x === seg[0]);
+            if (p2[0]===p2[1] && allSame(p3) && allSame(p4) && p2[0]!==p3[0] && p3[0]!==p4[0]) {
+                signals.push({ name: 'Fibonacci', sym: p4[0]===symA?symB:symA, weight: 0.5, note: 'Nhịp tăng dần' });
+            }
+        }
+        if (n >= 8) {
+            const l8 = arr.slice(n-8);
+            if (l8[0]===l8[1] && l8[2]===l8[3] && l8[0]!==l8[2] &&
+                l8[4]===l8[5] && l8[6]===l8[7] && l8[4]!==l8[6] &&
+                l8[0]===l8[6] && l8[2]===l8[4]) {
+                signals.push({ name: 'Gãy đôi ABAB', sym: l8[7]===symA?symB:symA, weight: 0.55, note: 'Gãy đôi hoàn thành' });
+            }
+        }
+        if (n >= 8) {
+            const s = streak.len;
+            if (s >= 3 && s <= 5 && s % 2 === 1) signals.push({ name: 'Streak parity', sym: streak.sym, weight: 0.48, note: `Streak ${s} lẻ` });
+            else if (s >= 2 && s % 2 === 0 && s <= 4) signals.push({ name: 'Streak parity', sym: oppSym, weight: 0.45, note: `Streak ${s} chẵn` });
+        }
+        if (n >= 8) {
+            const l8 = arr.slice(n-8);
+            if (l8[0]===l8[3] && l8[1]===l8[2] && l8[4]===l8[7] && l8[5]===l8[6] && l8[0]===l8[4] && l8[0]!==l8[1]) {
+                signals.push({ name: 'Cầu 1-2-1 kép', sym: l8[7]===symA?symB:symA, weight: 0.55, note: 'Mẫu 1-2-1 kép' });
+            }
+        }
+        if (n >= 15) {
+            const recent = arr.slice(-15);
+            let cA = 0; for (const x of recent) if (x === symA) cA++;
+            const p = cA / 15;
+            const variance = p * (1 - p);
+            if (variance < 0.1) {
+                const major = cA >= 8 ? symA : symB;
+                signals.push({ name: 'Variance thấp', sym: major, weight: 0.45, note: '15 phiên ổn định' });
+            }
+        }
+        if (n >= 9) {
+            const l9 = arr.slice(n-9);
+            let breaks = 0;
+            for (let i = 1; i < 9; i++) if (l9[i] !== l9[i-1]) breaks++;
+            if (breaks >= 7) signals.push({ name: 'Nhiều break', sym: l9[8], weight: 0.45, note: `${breaks}/8 đổi — sắp bệt` });
+            else if (breaks <= 1) signals.push({ name: 'Ít break', sym: l9[8]===symA?symB:symA, weight: 0.5, note: `${breaks}/8 đổi — sắp bẻ` });
+        }
+        if (n >= 16) {
+            const l16 = arr.slice(n-16);
+            let ok = true;
+            for (let i = 8; i < 16; i++) if (l16[i] !== l16[i-8]) { ok = false; break; }
+            for (let i = 0; i < 8; i += 4) {
+                for (let j = 1; j < 4; j++) if (l16[i+j] !== l16[i]) { ok = false; break; }
+                if (!ok) break;
+            }
+            if (ok && l16[0] !== l16[8]) {
+                const nextSym = l16[15] === symA ? symB : symA;
+                signals.push({ name: 'Cầu 4-4', sym: nextSym, weight: 0.6, note: 'Mẫu 4-4' });
+            }
+        }
+        if (n >= 25) {
+            const recent = arr.slice(-12);
+            const older = arr.slice(-25, -12);
+            let cA_recent = recent.filter(x => x === symA).length;
+            let cA_older = older.filter(x => x === symA).length;
+            const rRecent = cA_recent / recent.length;
+            const rOlder = cA_older / older.length;
+            if (rRecent - rOlder > 0.3) signals.push({ name: 'Hồi quy đảo', sym: symB, weight: 0.5, note: `${optA} tăng mạnh` });
+            else if (rOlder - rRecent > 0.3) signals.push({ name: 'Hồi quy đảo', sym: symA, weight: 0.5, note: `${optB} tăng mạnh` });
+        }
+        if (n >= 3) {
+            const last3 = arr.slice(-3);
+            if (last3.every(x => x === symA)) signals.push({ name: 'Momentum 3', sym: symB, weight: 0.4, note: `3 ${optA} — có thể bẻ` });
+            else if (last3.every(x => x === symB)) signals.push({ name: 'Momentum 3', sym: symA, weight: 0.4, note: `3 ${optB} — có thể bẻ` });
+        }
+        if (n >= 20) {
+            let changes = 0;
+            for (let i = 1; i < n; i++) if (arr[i] !== arr[i-1]) changes++;
+            const volatility = changes / (n - 1);
+            const lastSym = arr[n-1];
+            if (volatility > 0.75) signals.push({ name: 'Volatility cao', sym: lastSym, weight: 0.4, note: `${(volatility*100).toFixed(0)}% đổi` });
+            else if (volatility < 0.25) signals.push({ name: 'Volatility thấp', sym: lastSym === symA ? symB : symA, weight: 0.45, note: `${(volatility*100).toFixed(0)}% đổi` });
+        }
+
+        let sumA = 0, sumB = 0, totalW = 0;
+        for (const s of signals) {
+            totalW += s.weight;
+            if (s.sym === symA) sumA += s.weight; else sumB += s.weight;
+        }
+        let consensus = null;
+        if (totalW > 0) {
+            const scoreA = sumA / totalW, scoreB = sumB / totalW;
+            const winner = scoreA >= scoreB ? symA : symB;
+            consensus = {
+                sym: winner, name: nameOf(winner),
+                confidence: (Math.max(scoreA, scoreB) * 100).toFixed(1) + '%',
+                scoreA: (scoreA*100).toFixed(1) + '%',
+                scoreB: (scoreB*100).toFixed(1) + '%',
+                totalSignals: signals.length,
+                rawScoreA: scoreA, rawScoreB: scoreB
+            };
+        }
+        let strongSignal = null;
+        if (signals.length > 0) strongSignal = signals.reduce((max, s) => s.weight > max.weight ? s : max, signals[0]);
+        return { signals, consensus, strongSignal };
+    }
+
+    // ============================================================
+    //  ÂM THANH
+    // ============================================================
+    function playNewSessionSound() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.setValueAtTime(1320, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.08, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+            osc.start(); osc.stop(ctx.currentTime + 0.3);
+        } catch (e) {}
+    }
+
+    // ============================================================
+    //  RENDER TÀI XỈU
+    // ============================================================
+    async function fetchTaiXiu() {
+        const container = document.getElementById('taixiuContent');
+        apiStatus.taixiu = 'loading';
+        try {
+            const data = await fetchWithRetry(TAIXIU_API, 3, 60000);
+            apiStatus.taixiu = 'ok';
+            saveLastData(STORAGE_KEYS.TAIXIU_LAST_DATA, data);
+            renderTaiXiu(container, data, false);
+        } catch (err) {
+            apiStatus.taixiu = 'err';
+            const cached = loadLastData(STORAGE_KEYS.TAIXIU_LAST_DATA);
+            if (cached) {
+                renderTaiXiu(container, cached, true, err.message);
+            } else {
+                container.innerHTML = `<div class="error">⚠️ Lỗi API Tài Xỉu: ${err.message}<br><br>
+                    <button onclick="fetchTaiXiu()" style="width:auto;">🔄 Thử lại</button></div>`;
+            }
+        }
+    }
+
+    function renderTaiXiu(container, data, isStale, errMsg) {
+        const xx = [data.Xuc_xac_1, data.Xuc_xac_2, data.Xuc_xac_3];
+        const tong = data.Tong;
+        const ketQua = data.Ket_qua;
+        const apiDuDoan = data.Du_doan || '—';
+        const apiDoTinCay = data.Do_tin_cay || '—';
+        const phien = data.phien_hien_tai || data.Phien;
+        const pattern = data.Pattern || '';
+
+        const isNewPhien = lastTaiXiuPhien !== null && lastTaiXiuPhien !== phien;
+
+        if (phien !== lastTaiXiuPhien) {
+            const txSym = tong >= 11 ? 'T' : 'X';
+            const added = pushHistory(taiXiuHistory, { phien, tong, tx: txSym });
+            if (added) saveHistory(STORAGE_KEYS.TAIXIU_HISTORY, taiXiuHistory);
+            lastTaiXiuPhien = phien;
+            saveLastPhien(STORAGE_KEYS.TAIXIU_LAST_PHIEN, phien);
+        }
+
+        const arr = [];
+        for (const ch of pattern.toLowerCase()) {
+            if (ch === 't') arr.push('T');
+            else if (ch === 'x') arr.push('X');
+        }
+
+        const isTai = ketQua.toLowerCase().includes('tài') || ketQua.toLowerCase() === 'tai';
+        const badgeClass = isTai ? 'tai' : 'xiu';
+
+        const { signals, consensus, strongSignal } = analyzeSignals(arr, 'Tài', 'Xỉu', 'T', 'X');
+
+        let mainSym, mainName, mainConf, mainSource;
+        if (consensus) {
+            mainSym = consensus.sym; mainName = consensus.name;
+            mainConf = consensus.confidence; mainSource = `${consensus.totalSignals} thuật toán`;
+        } else {
+            mainSym = apiDuDoan.toLowerCase().includes('tài') ? 'T' : 'X';
+            mainName = apiDuDoan; mainConf = apiDoTinCay; mainSource = 'API gốc';
+        }
+        const mainColor = mainSym === 'T' ? '#f5b042' : '#4d7cfe';
+        const barPct = consensus ? (mainSym === 'T' ? consensus.rawScoreA : consensus.rawScoreB) * 100 : 50;
+
+        let signalRows = '';
+        if (signals.length === 0) {
+            signalRows = '<tr><td colspan="4" style="color:#8b94a8; text-align:center;">Chưa đủ dữ liệu</td></tr>';
+        } else {
+            for (const s of signals) {
+                const sigClass = s.sym === 'T' ? 'signal-tai' : 'signal-xiu';
+                signalRows += `<tr>
+                    <td class="algo-name">${s.name}</td>
+                    <td class="algo-signal ${sigClass}">${s.sym === 'T' ? 'Tài' : 'Xỉu'}</td>
+                    <td class="algo-weight">${(s.weight*100).toFixed(0)}%</td>
+                    <td style="font-size:0.7rem; color:#8b94a8;" title="${s.note}">ⓘ</td>
+                </tr>`;
+            }
+        }
+
+        let patternHtml = '';
+        if (pattern) {
+            const colored = pattern.split('').map(ch => {
+                const l = ch.toLowerCase();
+                if (l === 't') return '<span class="t">t</span>';
+                if (l === 'x') return '<span class="x">x</span>';
+                return ch;
+            }).join('');
+            patternHtml = `<div class="pattern-view">${colored}</div>`;
+        }
+
+        const historyChips = taiXiuHistory.slice(-30).map(h => {
+            const cls = h.tx === 'T' ? 'chip-t' : 'chip-x';
+            return `<span class="history-chip ${cls}" title="Phiên ${h.phien} - Tổng ${h.tong}">${h.tx}</span>`;
+        }).join('');
+
+        const totalHist = taiXiuHistory.length;
+        const countT = taiXiuHistory.filter(h => h.tx === 'T').length;
+        const countX = totalHist - countT;
+        const storageBytes = (localStorage.getItem(STORAGE_KEYS.TAIXIU_HISTORY) || '').length;
+        const storageKB = (storageBytes / 1024).toFixed(1);
+
+        const statusDot = isStale ? 'err' : 'ok';
+        const statusText = isStale ? `⚠️ Mất kết nối — dùng dữ liệu cũ` : '✅ API hoạt động';
+
+        container.innerHTML = `
+            ${isNewPhien && !isStale ? '<div class="new-badge">PHIÊN MỚI</div>' : ''}
+            <div class="api-status">
+                <span class="api-dot ${statusDot}"></span>
+                <span>${statusText}</span>
+            </div>
+            ${isStale ? `<div class="warning">⚠️ Không kết nối được API (${errMsg}). Đang hiển thị dữ liệu cuối cùng đã lưu.</div>` : ''}
+            <div class="toggle-row">
+                <span>🤖 Tự động cập nhật</span>
+                <label class="switch">
+                    <input type="checkbox" ${autoRefresh ? 'checked' : ''} onchange="toggleAuto(this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="dice-area">
+                ${xx.map(v => `<div class="dice">${v}</div>`).join('')}
+            </div>
+            <div class="info-row"><span>Phiên hiện tại</span><strong>#${phien}</strong></div>
+            <div class="info-row"><span>Tổng 3 xúc xắc</span><strong>${tong}</strong></div>
+            <div class="info-row"><span>Kết quả phiên này</span><span class="badge ${badgeClass}">${ketQua}</span></div>
+            <div class="info-row"><span>API dự đoán gốc</span><strong>${apiDuDoan} <span style="color:#f5b042;">(${apiDoTinCay})</span></strong></div>
+
+            <div class="main-prediction">
+                <div class="mp-label">🎯 Dự đoán phiên tiếp theo</div>
+                <div class="mp-value">
+                    <span style="color:${mainColor}; text-shadow: 0 0 30px ${mainColor}66;">${mainName.toUpperCase()}</span>
+                    <span class="dot" style="background:${mainColor};"></span>
+                </div>
+                <div class="mp-meta">
+                    <span>Độ tin cậy: <b>${mainConf}</b></span>
+                    <span>Nguồn: <b>${mainSource}</b></span>
+                </div>
+                <div class="mp-bar">
+                    <div class="mp-bar-fill" style="width:${barPct}%;"></div>
+                </div>
+            </div>
+
+            <h3>📊 Tín hiệu (${signals.length} thuật toán)</h3>
+            <table class="algo-table">
+                <thead><tr><th>Thuật toán</th><th>Tín hiệu</th><th>Trọng số</th><th></th></tr></thead>
+                <tbody>${signalRows}</tbody>
+            </table>
+
+            ${consensus ? `
+            <div style="margin-top:10px; padding:8px 12px; background:rgba(0,0,0,0.3); border-radius:10px; font-size:0.75rem; color:#c0c7d4;">
+                <b style="color:#fff;">Consensus:</b> Tài ${consensus.scoreA} — Xỉu ${consensus.scoreB}
+                ${strongSignal ? `<br><b style="color:#fff;">Mạnh nhất:</b> ${strongSignal.name} → ${strongSignal.sym === 'T' ? 'Tài' : 'Xỉu'}` : ''}
+            </div>` : ''}
+
+            <h3>🧩 Pattern gần đây</h3>
+            ${patternHtml}
+
+            <h3>💾 Lịch sử vĩnh viễn (${totalHist} phiên)</h3>
+            <div class="history-strip">${historyChips || '<span style="color:#8b94a8; font-size:0.75rem;">Chưa có lịch sử</span>'}</div>
+            <div class="stats-row">
+                <span>Tài: <b>${countT}</b></span>
+                <span>Xỉu: <b>${countX}</b></span>
+                <span>Tỉ lệ T/X: <b>${totalHist > 0 ? ((countT/totalHist)*100).toFixed(1) : 0}%</b></span>
+            </div>
+            <div class="storage-info">💿 Dung lượng lưu: ${storageKB} KB — không giới hạn số phiên</div>
+
+            <div class="status">Cập nhật: ${new Date().toLocaleTimeString('vi-VN')}</div>
+            <button onclick="fetchTaiXiu()">🔄 Làm mới ngay</button>
+            <div class="btn-row">
+                <button class="small-btn" onclick="exportHistory('taixiu')">⬇️ Xuất</button>
+                <button class="small-btn" onclick="importHistory('taixiu')">⬆️ Nhập</button>
+                <button class="small-btn" onclick="clearHistory('taixiu')" style="background:rgba(232,93,122,0.2);">🗑️ Xóa</button>
+            </div>
+        `;
+
+        if (isNewPhien && !isStale) playNewSessionSound();
+    }
+
+    // ============================================================
+    //  RENDER SICBO
+    // ============================================================
+    async function fetchSicbo() {
+        const container = document.getElementById('sicboContent');
+        apiStatus.sicbo = 'loading';
+        try {
+            const data = await fetchWithRetry(SICBO_API, 3, 60000);
+            apiStatus.sicbo = 'ok';
+            saveLastData(STORAGE_KEYS.SICBO_LAST_DATA, data);
+            renderSicbo(container, data, false);
+        } catch (err) {
+            apiStatus.sicbo = 'err';
+            const cached = loadLastData(STORAGE_KEYS.SICBO_LAST_DATA);
+            if (cached) {
+                renderSicbo(container, cached, true, err.message);
+            } else {
+                container.innerHTML = `<div class="error">⚠️ Lỗi API Sicbo: ${err.message}<br><br>
+                    <button onclick="fetchSicbo()" style="width:auto;">🔄 Thử lại</button></div>`;
+            }
+        }
+    }
+
+    function renderSicbo(container, data, isStale, errMsg) {
+        const xx = [data.Xuc_xac_1, data.Xuc_xac_2, data.Xuc_xac_3];
+        const tong = data.Tong;
+        const phien = data.Phien;
+        const laChan = tong % 2 === 0;
+        const laTai = tong >= 11;
+        const chanLe = laChan ? 'Chẵn' : 'Lẻ';
+        const taiXiu = laTai ? 'Tài' : 'Xỉu';
+        const chanLeClass = laChan ? 'chan' : 'le';
+        const taiXiuClass = laTai ? 'tai' : 'xiu';
+
+        const isNewPhien = lastSicboPhien !== null && lastSicboPhien !== phien;
+
+        if (phien !== lastSicboPhien) {
+            const txSym = laTai ? 'T' : 'X';
+            const clSym = laChan ? 'C' : 'L';
+            const added = pushHistory(sicboHistory, { phien, tong, tx: txSym, cl: clSym });
+            if (added) saveHistory(STORAGE_KEYS.SICBO_HISTORY, sicboHistory);
+            lastSicboPhien = phien;
+            saveLastPhien(STORAGE_KEYS.SICBO_LAST_PHIEN, phien);
+        }
+
+        const txArr = sicboHistory.map(h => h.tx);
+        const clArr = sicboHistory.map(h => h.cl);
+
+        const txAnalysis = analyzeSignals(txArr, 'Tài', 'Xỉu', 'T', 'X');
+        const clAnalysis = analyzeSignals(clArr, 'Chẵn', 'Lẻ', 'C', 'L');
+
+        let txMainSym, txMainName, txMainConf, txMainSource;
+        if (txAnalysis.consensus) {
+            txMainSym = txAnalysis.consensus.sym;
+            txMainName = txAnalysis.consensus.name;
+            txMainConf = txAnalysis.consensus.confidence;
+            txMainSource = `${txAnalysis.consensus.totalSignals} thuật toán`;
+        } else {
+            txMainSym = laTai ? 'X' : 'T';
+            txMainName = laTai ? 'Xỉu' : 'Tài';
+            txMainConf = '—'; txMainSource = 'Đảo cầu';
+        }
+        const txColor = txMainSym === 'T' ? '#f5b042' : '#4d7cfe';
+        const txBarPct = txAnalysis.consensus ? (txMainSym === 'T' ? txAnalysis.consensus.rawScoreA : txAnalysis.consensus.rawScoreB) * 100 : 50;
+
+        let clMainSym, clMainName, clMainConf, clMainSource;
+        if (clAnalysis.consensus) {
+            clMainSym = clAnalysis.consensus.sym;
+            clMainName = clAnalysis.consensus.name;
+            clMainConf = clAnalysis.consensus.confidence;
+            clMainSource = `${clAnalysis.consensus.totalSignals} thuật toán`;
+        } else {
+            clMainSym = laChan ? 'L' : 'C';
+            clMainName = laChan ? 'Lẻ' : 'Chẵn';
+            clMainConf = '—'; clMainSource = 'Đảo cầu';
+        }
+        const clColor = clMainSym === 'C' ? '#31c48d' : '#e85d7a';
+        const clBarPct = clAnalysis.consensus ? (clMainSym === 'C' ? clAnalysis.consensus.rawScoreA : clAnalysis.consensus.rawScoreB) * 100 : 50;
+
+        let txSignalRows = '';
+        if (txAnalysis.signals.length === 0) {
+            txSignalRows = '<tr><td colspan="4" style="color:#8b94a8; text-align:center;">Chờ thêm phiên</td></tr>';
+        } else {
+            for (const s of txAnalysis.signals) {
+                const sigClass = s.sym === 'T' ? 'signal-tai' : 'signal-xiu';
+                txSignalRows += `<tr>
+                    <td class="algo-name">${s.name}</td>
+                    <td class="algo-signal ${sigClass}">${s.sym === 'T' ? 'Tài' : 'Xỉu'}</td>
+                    <td class="algo-weight">${(s.weight*100).toFixed(0)}%</td>
+                    <td style="font-size:0.7rem; color:#8b94a8;" title="${s.note}">ⓘ</td>
+                </tr>`;
+            }
+        }
+
+        let clSignalRows = '';
+        if (clAnalysis.signals.length === 0) {
+            clSignalRows = '<tr><td colspan="4" style="color:#8b94a8; text-align:center;">Chờ thêm phiên</td></tr>';
+        } else {
+            for (const s of clAnalysis.signals) {
+                const sigClass = s.sym === 'C' ? 'signal-chan' : 'signal-le';
+                clSignalRows += `<tr>
+                    <td class="algo-name">${s.name}</td>
+                    <td class="algo-signal ${sigClass}">${s.sym === 'C' ? 'Chẵn' : 'Lẻ'}</td>
+                    <td class="algo-weight">${(s.weight*100).toFixed(0)}%</td>
+                    <td style="font-size:0.7rem; color:#8b94a8;" title="${s.note}">ⓘ</td>
+                </tr>`;
+            }
+        }
+
+        const historyChipsTx = sicboHistory.slice(-20).map(h => {
+            const cls = h.tx === 'T' ? 'chip-t' : 'chip-x';
+            return `<span class="history-chip ${cls}" title="Phiên ${h.phien} - Tổng ${h.tong}">${h.tx}</span>`;
+        }).join('');
+        const historyChipsCl = sicboHistory.slice(-20).map(h => {
+            const cls = h.cl === 'C' ? 'chip-c' : 'chip-l';
+            return `<span class="history-chip ${cls}" title="Phiên ${h.phien} - Tổng ${h.tong}">${h.cl}</span>`;
+        }).join('');
+
+        const totalHist = sicboHistory.length;
+        const countT = sicboHistory.filter(h => h.tx === 'T').length;
+        const countC = sicboHistory.filter(h => h.cl === 'C').length;
+        const storageBytes = (localStorage.getItem(STORAGE_KEYS.SICBO_HISTORY) || '').length;
+        const storageKB = (storageBytes / 1024).toFixed(1);
+
+        const statusDot = isStale ? 'err' : 'ok';
+        const statusText = isStale ? `⚠️ Mất kết nối — dùng dữ liệu cũ` : '✅ API hoạt động';
+
+        container.innerHTML = `
+            ${isNewPhien && !isStale ? '<div class="new-badge">PHIÊN MỚI</div>' : ''}
+            <div class="api-status">
+                <span class="api-dot ${statusDot}"></span>
+                <span>${statusText}</span>
+            </div>
+            ${isStale ? `<div class="warning">⚠️ Không kết nối được API (${errMsg}). Đang hiển thị dữ liệu cuối cùng đã lưu.</div>` : ''}
+            <div class="toggle-row">
+                <span>🤖 Tự động cập nhật</span>
+                <label class="switch">
+                    <input type="checkbox" ${autoRefresh ? 'checked' : ''} onchange="toggleAuto(this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="dice-area">
+                ${xx.map(v => `<div class="dice">${v}</div>`).join('')}
+            </div>
+            <div class="info-row"><span>Phiên hiện tại</span><strong>#${phien}</strong></div>
+            <div class="info-row"><span>Tổng 3 xúc xắc</span><strong>${tong}</strong></div>
+            <div class="info-row">
+                <span>Kết quả phiên này</span>
+                <span>
+                    <span class="badge ${taiXiuClass}">${taiXiu}</span>
+                    <span class="badge ${chanLeClass}" style="margin-left:6px;">${chanLe}</span>
+                </span>
+            </div>
+
+            <div class="dual-prediction">
+                <div class="dual-box">
+                    <div class="mp-label">🎯 Dự đoán Tài/Xỉu</div>
+                    <div class="mp-value">
+                        <span style="color:${txColor}; text-shadow: 0 0 25px ${txColor}66;">${txMainName.toUpperCase()}</span>
+                        <span class="dot" style="background:${txColor};"></span>
+                    </div>
+                    <div class="mp-meta">
+                        <span>Tin cậy: <b>${txMainConf}</b></span>
+                        <span>Nguồn: <b>${txMainSource}</b></span>
+                    </div>
+                    <div class="mp-bar">
+                        <div class="mp-bar-fill" style="width:${txBarPct}%;"></div>
+                    </div>
+                </div>
+                <div class="dual-box">
+                    <div class="mp-label">🎯 Dự đoán Chẵn/Lẻ</div>
+                    <div class="mp-value">
+                        <span style="color:${clColor}; text-shadow: 0 0 25px ${clColor}66;">${clMainName.toUpperCase()}</span>
+                        <span class="dot" style="background:${clColor};"></span>
+                    </div>
+                    <div class="mp-meta">
+                        <span>Tin cậy: <b>${clMainConf}</b></span>
+                        <span>Nguồn: <b>${clMainSource}</b></span>
+                    </div>
+                    <div class="mp-bar">
+                        <div class="mp-bar-fill chan-fill" style="width:${clBarPct}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>📊 Tín hiệu Tài/Xỉu (${txAnalysis.signals.length} thuật toán)</h3>
+            <table class="algo-table">
+                <thead><tr><th>Thuật toán</th><th>Tín hiệu</th><th>Trọng số</th><th></th></tr></thead>
+                <tbody>${txSignalRows}</tbody>
+            </table>
+
+            <h3>📊 Tín hiệu Chẵn/Lẻ (${clAnalysis.signals.length} thuật toán)</h3>
+            <table class="algo-table">
+                <thead><tr><th>Thuật toán</th><th>Tín hiệu</th><th>Trọng số</th><th></th></tr></thead>
+                <tbody>${clSignalRows}</tbody>
+            </table>
+
+            <h3>💾 Lịch sử vĩnh viễn (${totalHist} phiên)</h3>
+            <div class="history-strip">${historyChipsTx || '<span style="color:#8b94a8; font-size:0.75rem;">Chưa có lịch sử</span>'}</div>
+            <div class="history-count">T/X: Tài ${countT} — Xỉu ${totalHist-countT}</div>
+            <div class="history-strip" style="margin-top:4px;">${historyChipsCl || ''}</div>
+            <div class="history-count">C/L: Chẵn ${countC} — Lẻ ${totalHist-countC}</div>
+            <div class="storage-info">💿 Dung lượng lưu: ${storageKB} KB — không giới hạn số phiên</div>
+
+            <div class="status">Cập nhật: ${new Date().toLocaleTimeString('vi-VN')}</div>
+            <button onclick="fetchSicbo()">🔄 Làm mới ngay</button>
+            <div class="btn-row">
+                <button class="small-btn" onclick="exportHistory('sicbo')">⬇️ Xuất</button>
+                <button class="small-btn" onclick="importHistory('sicbo')">⬆️ Nhập</button>
+                <button class="small-btn" onclick="clearHistory('sicbo')" style="background:rgba(232,93,122,0.2);">🗑️ Xóa</button>
+            </div>
+        `;
+
+        if (isNewPhien && !isStale) playNewSessionSound();
+    }
+
+    // ============================================================
+    //  XUẤT / NHẬP / XÓA
+    // ============================================================
+    function exportHistory(type) {
+        const data = type === 'taixiu' ? taiXiuHistory : sicboHistory;
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lich-su-${type}-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function importHistory(type) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const imported = JSON.parse(ev.target.result);
+                    if (!Array.isArray(imported)) throw new Error('Dữ liệu không hợp lệ');
+                    imported.sort((a, b) => a.phien - b.phien);
+                    if (type === 'taixiu') {
+                        taiXiuHistory = imported;
+                        saveHistory(STORAGE_KEYS.TAIXIU_HISTORY, taiXiuHistory);
+                        fetchTaiXiu();
+                    } else {
+                        sicboHistory = imported;
+                        saveHistory(STORAGE_KEYS.SICBO_HISTORY, sicboHistory);
+                        fetchSicbo();
+                    }
+                    alert(`Đã nhập ${imported.length} phiên ${type}`);
+                } catch (err) {
+                    alert('Lỗi nhập: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    function clearHistory(type) {
+        if (!confirm(`Xóa toàn bộ lịch sử ${type}?`)) return;
+        if (type === 'taixiu') {
+            taiXiuHistory = [];
+            saveHistory(STORAGE_KEYS.TAIXIU_HISTORY, []);
+            fetchTaiXiu();
+        } else {
+            sicboHistory = [];
+            saveHistory(STORAGE_KEYS.SICBO_HISTORY, []);
+            fetchSicbo();
+        }
+    }
+
+    // ============================================================
+    //  ĐIỀU KHIỂN
+    // ============================================================
+    let autoRefresh = true;
+    let refreshInterval = null;
+
+    function toggleAuto(on) {
+        autoRefresh = on;
+        if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
+        if (on) {
+            refreshInterval = setInterval(() => {
+                fetchTaiXiu();
+                fetchSicbo();
+            }, 8000);
+        }
+    }
+
+    function init() {
+        fetchTaiXiu();
+        fetchSicbo();
+        toggleAuto(true);
+    }
+    init();
+</script>
+</body>
+</html>
